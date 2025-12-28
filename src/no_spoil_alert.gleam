@@ -41,7 +41,7 @@ fn serve_site() {
     |> mist.new
     |> mist.bind("localhost")
     |> mist.with_ipv6
-    |> mist.port(4000)
+    |> mist.port(8000)
     |> mist.start()
 
   process.sleep_forever()
