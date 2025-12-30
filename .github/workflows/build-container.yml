@@ -49,18 +49,6 @@ jobs:
     needs: build-and-push
     environment: server_ssh
     steps:
-      - name: Debug - Check if SSH_KNOWN_HOSTS is loaded
-        run: |
-          echo "KNOWN_HOSTS length: ${#KNOWN_HOSTS}"
-          if [ -z "$KNOWN_HOSTS" ]; then
-            echo "🚨 ERROR: SSH_KNOWN_HOSTS is empty or not available!"
-            exit 1
-          else
-            echo "✅ SSH_KNOWN_HOSTS is present (length: ${#KNOWN_HOSTS} chars)"
-          fi
-        env:
-          KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
-
       - name: Deploy to server
         env:
           SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
@@ -72,11 +60,11 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
 
           echo "$KNOWN_HOSTS" > ~/.ssh/known_hosts
-          ssh -i ~/.ssh/deploy_key ubuntu@54.241.201.248 << EOF
+          ssh -i ~/.ssh/deploy_key ubuntu@54.241.201.248 << 'EOF'
           echo "Pulling exact image: ghcr.io/armandris/no_spoil_alert@$IMAGE_DIGEST"
           sudo podman pull ghcr.io/armandris/no_spoil_alert@$IMAGE_DIGEST
           echo "Restarting container..."
-          sudo systemctl restart no_spoil_alert
+          sudo systemctl restart no_spoil_alert.container
           echo "Deploy complete!"
           EOF
 
