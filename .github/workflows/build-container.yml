@@ -77,11 +77,12 @@ jobs:
           echo "IMAGE DIGEST: $IMAGE_DIGEST"
 
           echo "$KNOWN_HOSTS" > ~/.ssh/known_hosts
-          ssh -i ~/.ssh/deploy_key ubuntu@54.241.201.248 << 'EOF'
+          ssh -i ~/.ssh/deploy_key ubuntu@54.241.201.248 "IMAGE_DIGEST='$IMAGE_DIGEST' bash -s" << 'EOF'
           echo "Pulling exact image: ghcr.io/armandris/no_spoil_alert@$IMAGE_DIGEST"
           sudo podman pull ghcr.io/armandris/no_spoil_alert@$IMAGE_DIGEST
           echo "Restarting container..."
           sudo systemctl restart no_spoil_alert.service
           echo "Deploy complete!"
           EOF
+
 
