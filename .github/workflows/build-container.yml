@@ -56,6 +56,16 @@ jobs:
     needs: build-and-push
     environment: server_ssh
     steps:
+      - name: Debug - Print received digest
+        run: |
+          echo "Raw digest from job output:"
+          echo "${{ needs.build-and-push.outputs.digest }}"
+          echo ""
+          echo "Length: ${#DIGEST_VAR}"
+          echo "First 10 chars: ${{ needs.build-and-push.outputs.digest | slice(0, 10) }}"
+        env:
+          DIGEST_VAR: ${{ needs.build-and-push.outputs.digest }}
+
       - name: Deploy to server
         env:
           SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
