@@ -14,7 +14,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Compute short SHA
-        run: echo "SHORT_SHA=${{ github.sha }}".substring(0,8) >> $GITHUB_ENV
+        run: echo "SHORT_SHA=${GITHUB_SHA:0:8}" >> $GITHUB_ENV
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -34,7 +34,7 @@ jobs:
           push: true
           tags: |
             ghcr.io/armandris/no_spoil_alert:sha-${{ env.SHORT_SHA }}
-            ghcr.io/armandris/no_spoil_alert:latest  # Optional: add 'latest' on main
+            ghcr.io/armandris/no_spoil_alert:latest
           build-args: |
             GIT_SHA=${{ github.sha }}
             BUILD_TIME=${{ github.run_id }}
