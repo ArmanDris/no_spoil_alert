@@ -40,3 +40,29 @@ jobs:
             BUILD_TIME=${{ github.run_id }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+    outputs:
+      digest: ${{ steps.build.outputs.digest }}
+
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to server
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
+          IMAGE_DIGEST: ${{ needs.build-and-push.outputs.digest }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+
+          echo "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          ssh -i ~/.ssh/deploy_key ubuntu@54.241.201.248 << EOF
+          echo "Pulling exact image: ghcr.io/armandris/no_spoil_alert@$IMAGE_DIGEST"
+          sudo podman pull ghcr.io/armandris/no_spoil_alert@$IMAGE_DIGEST
+          echo "Restarting container..."
+          sudo systemctl restart no_spoil_alert.container
+          echo "Deploy complete!"
+          EOF
+
