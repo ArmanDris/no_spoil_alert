@@ -1,13 +1,14 @@
+import envoy
 import football_game.{FootballGame, filter_games_today, sort_games}
 import gleam/dynamic/decode
 import gleam/http/request
 import gleam/httpc
+import gleam/int
 import gleam/json
 import gleam/option.{None}
 import gleam/result
+import gleam/time/calendar
 import gleam/time/timestamp
-
-const schedule_api_endpoint = "http://localhost:4001"
 
 fn decode_schedule_response(response_body) {
   let quarter_status_decoder = {
@@ -59,7 +60,6 @@ fn decode_schedule_response(response_body) {
   }
 
   let football_game_decoder = {
-    // TODO: Replace with custom timestamp decoder
     use game_id <- decode.field("GameID", decode.optional(decode.int))
     use date_time <- decode.field(
       "DateTimeUTC",
@@ -99,11 +99,43 @@ fn decode_schedule_response(response_body) {
 /// by game start time, if start time is null
 /// returns
 pub fn get_schedule() {
-  let assert Ok(request) = request.to(schedule_api_endpoint)
+  let date =
+    timestamp.system_time() |> timestamp.to_calendar(calendar.local_offset())
+
+  let year = { date.0 }.year |> int.to_string()
+
+  use sports_data_io_api_key <- result.try(
+    "SPORTS_DATA_IO_API_KEY"
+    |> envoy.get()
+    |> result.map_error(fn(_nil) {
+      "missing SPORTS_DATA_IO_API_KEY, cannot query endpoint"
+    }),
+  )
+
+  echo sports_data_io_api_key
+
+  let schedule_api_endpoint =
+    "https://api.sportsdata.io/v3/nfl/scores/json/SchedulesBasic/"
+  // <> year
+  // <> "}?key="
+  // <> sports_data_io_api_key
+
+  use request <- result.try(
+    schedule_api_endpoint
+    |> request.to()
+    |> result.map_error(fn(_nil) { "Failed to construct request record" })
+    |> result.map(fn(request) {
+      request.set_path(request, "/v3/nfl/scores/json/SchedulesBasic/" <> year)
+    })
+    |> result.map(fn(request) {
+      request.set_query(request, [#("key", sports_data_io_api_key)])
+    }),
+  )
 
   use resp <- result.try(
     httpc.send(request)
-    |> result.map_error(fn(_httpc_error) {
+    |> result.map_error(fn(httpc_error) {
+      echo httpc_error
       "get_schedule.gleam: Failed to query the game schedule endpoint"
     }),
   )
