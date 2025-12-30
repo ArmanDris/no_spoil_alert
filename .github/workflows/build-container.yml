@@ -76,7 +76,7 @@ jobs:
           echo "Pulling exact image: ghcr.io/armandris/no_spoil_alert@$IMAGE_DIGEST"
           sudo podman pull ghcr.io/armandris/no_spoil_alert@$IMAGE_DIGEST
           echo "Restarting container..."
-          sudo systemctl restart no_spoil_alert.container
+          sudo systemctl restart no_spoil_alert
           echo "Deploy complete!"
           EOF
 
