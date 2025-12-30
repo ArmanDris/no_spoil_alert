@@ -27,6 +27,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push
+        id: build
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -64,7 +65,7 @@ jobs:
           echo "Pulling exact image: ghcr.io/armandris/no_spoil_alert@$IMAGE_DIGEST"
           sudo podman pull ghcr.io/armandris/no_spoil_alert@$IMAGE_DIGEST
           echo "Restarting container..."
-          sudo systemctl restart no_spoil_alert.container
+          sudo systemctl restart no_spoil_alert.service
           echo "Deploy complete!"
           EOF
 
