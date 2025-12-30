@@ -42,12 +42,6 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Debug action outputs
-        run: |
-          echo "Digest output: '${{ steps.build.outputs.digest }}'"
-          echo "ImageID output: '${{ steps.build.outputs.imageid }}'"
-          echo "Metadata output: '${{ steps.build.outputs.metadata }}'"
-
     outputs:
       digest: ${{ steps.build.outputs.digest }}
 
@@ -56,15 +50,6 @@ jobs:
     needs: build-and-push
     environment: server_ssh
     steps:
-      - name: Debug - Print received digest
-        run: |
-          echo "Raw digest from job output:"
-          echo "${{ needs.build-and-push.outputs.digest }}"
-          echo ""
-          echo "Length: ${#DIGEST_VAR}"
-        env:
-          DIGEST_VAR: ${{ needs.build-and-push.outputs.digest }}
-
       - name: Deploy to server
         env:
           SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
