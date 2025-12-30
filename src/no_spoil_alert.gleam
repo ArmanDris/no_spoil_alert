@@ -14,8 +14,8 @@ import table_page_html_generator.{generate_table_page}
 fn serve_site() {
   let environment = "ENVIRONMENT" |> envoy.get() |> result.unwrap("local")
 
-  let bind_interface = case environment {
-    "PRODUCTION" -> "0.0.0.0"
+  let bind_interface = case string.lowercase(environment) {
+    "production" -> "0.0.0.0"
     _ -> "localhost"
   }
 
