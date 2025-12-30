@@ -62,7 +62,6 @@ jobs:
           echo "${{ needs.build-and-push.outputs.digest }}"
           echo ""
           echo "Length: ${#DIGEST_VAR}"
-          echo "First 10 chars: ${{ needs.build-and-push.outputs.digest | slice(0, 10) }}"
         env:
           DIGEST_VAR: ${{ needs.build-and-push.outputs.digest }}
 
