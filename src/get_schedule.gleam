@@ -144,6 +144,5 @@ pub fn get_schedule() {
 
   unsorted_games
   |> sort_games()
-  |> filter_games_today()
   |> Ok()
 }
