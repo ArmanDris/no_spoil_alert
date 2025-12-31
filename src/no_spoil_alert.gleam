@@ -12,9 +12,13 @@ import mist.{type Connection, type ResponseData}
 import table_page_html_generator.{generate_table_page}
 
 fn serve_site() {
-  let environment = "ENVIRONMENT" |> envoy.get() |> result.unwrap("local")
+  let environment =
+    "ENVIRONMENT"
+    |> envoy.get()
+    |> result.unwrap("local")
+    |> string.lowercase()
 
-  let bind_interface = case string.lowercase(environment) {
+  let bind_interface = case environment {
     "production" -> "0.0.0.0"
     _ -> "localhost"
   }

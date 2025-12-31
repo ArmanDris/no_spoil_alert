@@ -1,5 +1,5 @@
 import envoy
-import football_game.{FootballGame, filter_games_today, sort_games}
+import football_game.{FootballGame, sort_games}
 import gleam/dynamic/decode
 import gleam/http/request
 import gleam/httpc
@@ -7,6 +7,7 @@ import gleam/int
 import gleam/json
 import gleam/option.{None}
 import gleam/result
+import gleam/string
 import gleam/time/calendar
 import gleam/time/timestamp
 
@@ -96,41 +97,47 @@ fn decode_schedule_response(response_body) {
 }
 
 /// Returns a list of FootballGame records, sorted 
-/// by game start time, if start time is null
-/// returns
+/// by game start time, games with missing start 
+/// times are returned at the end.
 pub fn get_schedule() {
   let date =
     timestamp.system_time() |> timestamp.to_calendar(calendar.local_offset())
 
-  let year = { date.0 }.year |> int.to_string()
-
-  use sports_data_io_api_key <- result.try(
-    "SPORTS_DATA_IO_API_KEY"
+  let environment =
+    "ENVIRONMENT"
     |> envoy.get()
-    |> result.map_error(fn(_nil) {
-      "missing SPORTS_DATA_IO_API_KEY, cannot query endpoint"
-    }),
-  )
+    |> result.unwrap("local")
+    |> string.lowercase()
 
-  echo sports_data_io_api_key
+  let request_result = case environment {
+    "production" -> {
+      let year = { date.0 }.year |> int.to_string()
 
-  let schedule_api_endpoint =
-    "https://api.sportsdata.io/v3/nfl/scores/json/SchedulesBasic/"
-  // <> year
-  // <> "}?key="
-  // <> sports_data_io_api_key
+      use sports_data_io_api_key <- result.try(
+        "SPORTS_DATA_IO_API_KEY"
+        |> envoy.get()
+        |> result.map_error(fn(_nil) {
+          "missing SPORTS_DATA_IO_API_KEY, cannot query endpoint"
+        }),
+      )
 
-  use request <- result.try(
-    schedule_api_endpoint
-    |> request.to()
-    |> result.map_error(fn(_nil) { "Failed to construct request record" })
-    |> result.map(fn(request) {
-      request.set_path(request, "/v3/nfl/scores/json/SchedulesBasic/" <> year)
-    })
-    |> result.map(fn(request) {
-      request.set_query(request, [#("key", sports_data_io_api_key)])
-    }),
-  )
+      "https://api.sportsdata.io/v3/nfl/scores/json/SchedulesBasic/"
+      |> request.to()
+      |> result.map_error(fn(_nil) { "Failed to construct request record" })
+      |> result.map(fn(request) {
+        request.set_path(request, "/v3/nfl/scores/json/SchedulesBasic/" <> year)
+      })
+      |> result.map(fn(request) {
+        request.set_query(request, [#("key", sports_data_io_api_key)])
+      })
+    }
+    _ ->
+      "http://localhost:4001"
+      |> request.to()
+      |> result.map_error(fn(_nil) { "failed to construct request record" })
+  }
+
+  use request <- result.try(request_result)
 
   use resp <- result.try(
     httpc.send(request)

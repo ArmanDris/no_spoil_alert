@@ -7,7 +7,6 @@ import gleam/list
 import gleam/option.{None, Some}
 import gleam/string
 import gleam/time/calendar
-import gleam/time/duration
 import gleam/time/timestamp
 
 fn month_to_string(month) {
@@ -28,26 +27,19 @@ fn month_to_string(month) {
 }
 
 fn format_time(time: calendar.TimeOfDay) {
-  let seconds = time.seconds
-  let hours = time.hours
-
-  let formatted_seconds = case seconds < 10 {
-    True -> {
-      string.append("0", int.to_string(seconds))
-    }
-    False -> {
-      seconds
-      |> int.to_string()
-    }
+  let formatted_minutes = case time.minutes < 10 {
+    True -> string.append("0", int.to_string(time.minutes))
+    False -> int.to_string(time.minutes)
   }
 
-  case hours <= 12 {
+  case time.hours <= 12 {
     True -> {
-      int.to_string(hours) <> ":" <> formatted_seconds <> " AM"
+      case time.hours == 0 {
+        True -> int.to_string(12) <> ":" <> formatted_minutes <> " AM"
+        False -> int.to_string(time.hours) <> ":" <> formatted_minutes <> " AM"
+      }
     }
-    False -> {
-      int.to_string(hours - 12) <> ":" <> formatted_seconds <> " PM"
-    }
+    False -> int.to_string(time.hours - 12) <> ":" <> formatted_minutes <> " PM"
   }
 }
 
@@ -60,7 +52,14 @@ fn generate_rows_html(rows: List(FootballGame)) {
     let parsed_time = case row.date_time {
       None -> "No data"
       Some(time) -> {
-        let #(date, time) = timestamp.to_calendar(time, duration.hours(-8))
+        let #(date, time) = timestamp.to_calendar(time, calendar.utc_offset)
+        case row.game_id == Some(19_039) {
+          True -> {
+            echo time
+            Nil
+          }
+          False -> Nil
+        }
         month_to_string(date.month)
         <> " "
         <> int.to_string(date.day)
