@@ -88,8 +88,8 @@ fn decode_schedule_response(response_body) {
   use parsed_body <- result.try(
     json.parse(response_body, decode.list(football_game_decoder))
     |> result.map_error(fn(json_parse_error) {
-      echo json_parse_error
-      "get_schedule.gleam: Failed to decode the API response. More details in logs"
+      "get_schedule.gleam: Failed to decode the API response. "
+      <> string.inspect(json_parse_error)
     }),
   )
 
@@ -142,8 +142,20 @@ pub fn get_schedule() {
   use resp <- result.try(
     httpc.send(request)
     |> result.map_error(fn(httpc_error) {
-      echo httpc_error
-      "get_schedule.gleam: Failed to query the game schedule endpoint"
+      "get_schedule.gleam: Failed to query the game schedule endpoint. "
+      <> string.inspect(httpc_error)
+    })
+    |> result.try(fn(response) {
+      case response.status >= 200 && response.status <= 299 {
+        True -> Ok(response)
+        False ->
+          Error(
+            "get_schedule.gleam: SportsDataIO returned an non ok response: "
+            <> int.to_string(response.status)
+            <> ", and a body of: "
+            <> response.body,
+          )
+      }
     }),
   )
 
