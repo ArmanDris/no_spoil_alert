@@ -1,15 +1,32 @@
 import envoy
-import football_game.{FootballGame, sort_games}
+import football_game.{type QuarterStatus, type Status, FootballGame, sort_games}
 import gleam/dynamic/decode
 import gleam/http/request
 import gleam/httpc
 import gleam/int
 import gleam/json
-import gleam/option.{None}
+import gleam/list
+import gleam/option.{type Option, None, Some}
 import gleam/result
 import gleam/string
 import gleam/time/calendar
 import gleam/time/timestamp
+
+/// SportsDataIO returns games that have a null
+/// GameID. So this is the type we decode into
+/// before finally creating games of type
+/// FootballGame.
+type ExternalFootballGame {
+  ExternalFootballGame(
+    game_id: Option(Int),
+    date_time: Option(timestamp.Timestamp),
+    away_team: String,
+    home_team: String,
+    status: Option(Status),
+    quarter_status: Option(QuarterStatus),
+    updated_at: timestamp.Timestamp,
+  )
+}
 
 fn decode_schedule_response(response_body) {
   let quarter_status_decoder = {
@@ -74,7 +91,7 @@ fn decode_schedule_response(response_body) {
       None,
       decode.optional(quarter_status_decoder),
     )
-    decode.success(FootballGame(
+    decode.success(ExternalFootballGame(
       game_id:,
       date_time:,
       away_team:,
@@ -94,6 +111,33 @@ fn decode_schedule_response(response_body) {
   )
 
   Ok(parsed_body)
+}
+
+/// Takes football games of type ExternalFootballGame
+/// and converts it to our type FootballGame
+fn convert_to_internal_football_games(
+  external_games: List(ExternalFootballGame),
+) {
+  list.fold(external_games, [], fn(accumulator, external_game) {
+    let football_game = case external_game.game_id, external_game.date_time {
+      Some(game_id), Some(date_time) ->
+        Some(FootballGame(
+          game_id:,
+          date_time:,
+          away_team: external_game.away_team,
+          home_team: external_game.home_team,
+          status: external_game.status,
+          quarter_status: external_game.quarter_status,
+          updated_at: external_game.updated_at,
+        ))
+      _, _ -> None
+    }
+
+    case football_game {
+      None -> accumulator
+      Some(football_game) -> list.prepend(accumulator, football_game)
+    }
+  })
 }
 
 /// Returns a list of FootballGame records, sorted 
@@ -159,9 +203,10 @@ pub fn get_schedule() {
     }),
   )
 
-  use unsorted_games <- result.try(decode_schedule_response(resp.body))
+  use unsorted_external_games <- result.try(decode_schedule_response(resp.body))
 
-  unsorted_games
+  unsorted_external_games
+  |> convert_to_internal_football_games()
   |> sort_games()
   |> Ok()
 }

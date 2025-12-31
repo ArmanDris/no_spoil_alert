@@ -46,28 +46,17 @@ fn format_time(time: calendar.TimeOfDay) {
 fn generate_rows_html(rows: List(FootballGame)) {
   rows
   |> list.map(fn(row) {
-    let parsed_game_id =
-      row.game_id |> option.map(int.to_string) |> option.unwrap("No Data")
-
-    let parsed_time = case row.date_time {
-      None -> "No data"
-      Some(time) -> {
-        let #(date, time) = timestamp.to_calendar(time, calendar.utc_offset)
-        case row.game_id == Some(19_039) {
-          True -> {
-            echo time
-            Nil
-          }
-          False -> Nil
-        }
+    let parsed_time =
+      fn() {
+        let #(date, time) =
+          timestamp.to_calendar(row.date_time, calendar.utc_offset)
         month_to_string(date.month)
         <> " "
         <> int.to_string(date.day)
         <> ", "
         <> format_time(time)
         <> " UTC"
-      }
-    }
+      }()
 
     let parsed_status = case row.status {
       Some(status) -> status_to_string(status)
@@ -80,7 +69,7 @@ fn generate_rows_html(rows: List(FootballGame)) {
     }
 
     "<tr>
-      <td>" <> parsed_game_id <> "</td>
+      <td>" <> int.to_string(row.game_id) <> "</td>
       <td>" <> row.home_team <> "</td>
       <td>" <> row.away_team <> "</td>
       <td>" <> parsed_time <> "</td>
