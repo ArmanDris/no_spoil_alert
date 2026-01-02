@@ -1,5 +1,4 @@
 import envoy
-import generate_not_found_page.{generate_not_found_page}
 import get_schedule.{get_schedule}
 import gleam/bytes_tree
 import gleam/erlang/process
@@ -10,6 +9,7 @@ import gleam/string
 import load_environment_variables
 import logging
 import mist.{type Connection, type ResponseData}
+import not_found_page_html_generator.{not_found_page_html_generator}
 import pog
 import table_page_html_generator.{generate_table_page}
 
@@ -46,7 +46,7 @@ fn serve_site(db_pool_name: process.Name(pog.Message)) {
         }
         _ -> {
           let response_body =
-            generate_not_found_page()
+            not_found_page_html_generator()
             |> bytes_tree.from_string()
             |> mist.Bytes()
 
