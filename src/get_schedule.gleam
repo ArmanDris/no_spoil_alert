@@ -150,20 +150,12 @@ fn convert_to_internal_football_games(
 }
 
 /// Returns True if our data is stale enough to warrant requerying SportsDataIO
-/// We consider our data stale if:
-///  - There is a live game and we have not queried in the past 1 hour
-///  - There is no live games and we have not queried in the past week
+/// We consider our data stale if it is more than 1 hour old.
 fn is_football_game_data_stale(
   database_connection_name: process.Name(pog.Message),
 ) {
   let database_connection = pog.named_connection(database_connection_name)
 
-  use live_games <- result.try(
-    sql.get_live_games(database_connection)
-    |> result.map_error(fn(query_error) {
-      "Error querying for live games " <> string.inspect(query_error)
-    }),
-  )
   use last_query_time <- result.try(
     sql.get_last_update_timestamp(database_connection)
     |> result.map_error(fn(query_error) {
@@ -171,29 +163,44 @@ fn is_football_game_data_stale(
     }),
   )
 
-  let hours_since_last_query = case last_query_time.rows {
+  let seconds_since_last_query = case last_query_time.rows {
     [last_query_time] -> {
       timestamp.difference(
         last_query_time.oldest_updated_at,
         timestamp.system_time(),
       )
       |> duration.to_seconds()
-      |> float.round()
-      |> int.divide(60)
-      |> result.unwrap(0)
       |> Some()
     }
     _ -> None
   }
 
-  let hours_threshold = case live_games.count {
-    0 -> 168
-    _ -> 1
+  let hours_since_last_query = case seconds_since_last_query {
+    None -> None
+    Some(seconds) ->
+      seconds
+      |> float.divide(60.0)
+      |> result.unwrap(0.0)
+      |> float.divide(60.0)
+      |> result.unwrap(0.0)
+      |> float.truncate()
+      |> Some()
   }
+
+  logging.log(
+    logging.Debug,
+    "Fetched a last query time from the database of: "
+      <> string.inspect(last_query_time.rows)
+      <> ". Computed that it has been "
+      <> string.inspect(seconds_since_last_query)
+      <> " seconds since the last query. Which is "
+      <> string.inspect(hours_since_last_query)
+      <> " hours.",
+  )
 
   case hours_since_last_query {
     None -> True
-    Some(hours_since_last_query) -> hours_since_last_query >= hours_threshold
+    Some(hours_since_last_query) -> hours_since_last_query >= 1
   }
   |> Ok()
 }
@@ -276,7 +283,8 @@ pub fn get_schedule(database_connection_name: process.Name(pog.Message)) {
     is_football_game_data_stale(database_connection_name)
   {
     Ok(True) -> refresh_football_game_data(database_connection_name)
-    _ -> Ok(Nil)
+    Ok(False) -> Ok(Nil)
+    Error(error) -> Error(error)
   }
 
   case refresh_result {

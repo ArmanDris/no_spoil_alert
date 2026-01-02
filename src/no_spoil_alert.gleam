@@ -1,4 +1,5 @@
 import envoy
+import generate_not_found_page.{generate_not_found_page}
 import get_schedule.{get_schedule}
 import gleam/bytes_tree
 import gleam/erlang/process
@@ -12,7 +13,7 @@ import mist.{type Connection, type ResponseData}
 import pog
 import table_page_html_generator.{generate_table_page}
 
-fn serve_site() {
+fn serve_site(db_pool_name: process.Name(pog.Message)) {
   let environment =
     "ENVIRONMENT"
     |> envoy.get()
@@ -23,18 +24,6 @@ fn serve_site() {
     "production" -> "0.0.0.0"
     _ -> "localhost"
   }
-
-  let db_pool_name = process.new_name("db_pool")
-  let assert Ok(database_url) = envoy.get("DATABASE_URL")
-  let assert Ok(pog_config) = pog.url_config(db_pool_name, database_url)
-  let assert Ok(_) =
-    pog_config
-    |> pog.pool_size(10)
-    |> pog.start
-
-  let not_found =
-    response.new(404)
-    |> response.set_body(mist.Bytes(bytes_tree.new()))
 
   let assert Ok(_) =
     fn(req: Request(Connection)) -> Response(ResponseData) {
@@ -55,7 +44,16 @@ fn serve_site() {
           |> response.prepend_header("Content-Type", "text/html")
           |> response.set_body(response_body)
         }
-        _ -> not_found
+        _ -> {
+          let response_body =
+            generate_not_found_page()
+            |> bytes_tree.from_string()
+            |> mist.Bytes()
+
+          response.new(404)
+          |> response.prepend_header("Content-Type", "text/html")
+          |> response.set_body(response_body)
+        }
       }
     }
     |> mist.new
@@ -81,5 +79,13 @@ pub fn main() {
     Ok(_) -> Nil
   }
 
-  serve_site()
+  let db_pool_name = process.new_name("db_pool")
+  let assert Ok(database_url) = envoy.get("DATABASE_URL")
+  let assert Ok(pog_config) = pog.url_config(db_pool_name, database_url)
+  let assert Ok(_) =
+    pog_config
+    |> pog.pool_size(10)
+    |> pog.start
+
+  serve_site(db_pool_name)
 }
