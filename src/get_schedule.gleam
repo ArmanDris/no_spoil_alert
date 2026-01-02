@@ -1,6 +1,11 @@
 import envoy
-import football_game.{type QuarterStatus, type Status, FootballGame, sort_games}
+import football_game.{
+  type QuarterStatus, type Status, FootballGame,
+  fetch_football_games_from_database, upsert_games_to_database,
+}
 import gleam/dynamic/decode
+import gleam/erlang/process
+import gleam/float
 import gleam/http/request
 import gleam/httpc
 import gleam/int
@@ -10,7 +15,11 @@ import gleam/option.{type Option, None, Some}
 import gleam/result
 import gleam/string
 import gleam/time/calendar
+import gleam/time/duration
 import gleam/time/timestamp
+import logging
+import pog
+import sql
 
 /// SportsDataIO returns games that have a null
 /// GameID. So this is the type we decode into
@@ -47,7 +56,7 @@ fn decode_schedule_response(response_body) {
     use status_string <- decode.then(decode.string)
     case status_string {
       "Scheduled" -> decode.success(football_game.Scheduled)
-      "InProgress" -> decode.success(football_game.InProgess)
+      "InProgress" -> decode.success(football_game.InProgress)
       "Final" -> decode.success(football_game.Final)
       "F/OT" -> decode.success(football_game.FinalOverTime)
       "Suspended" -> decode.success(football_game.Suspended)
@@ -140,13 +149,58 @@ fn convert_to_internal_football_games(
   })
 }
 
-/// Returns a list of FootballGame records, sorted 
-/// by game start time, games with missing start 
-/// times are returned at the end.
-pub fn get_schedule() {
-  let date =
-    timestamp.system_time() |> timestamp.to_calendar(calendar.local_offset())
+/// Returns True if our data is stale enough to warrant requerying SportsDataIO
+/// We consider our data stale if:
+///  - There is a live game and we have not queried in the past 1 hour
+///  - There is no live games and we have not queried in the past week
+fn is_football_game_data_stale(
+  database_connection_name: process.Name(pog.Message),
+) {
+  let database_connection = pog.named_connection(database_connection_name)
 
+  use live_games <- result.try(
+    sql.get_live_games(database_connection)
+    |> result.map_error(fn(query_error) {
+      "Error querying for live games " <> string.inspect(query_error)
+    }),
+  )
+  use last_query_time <- result.try(
+    sql.get_last_update_timestamp(database_connection)
+    |> result.map_error(fn(query_error) {
+      "Error querying last updated at time " <> string.inspect(query_error)
+    }),
+  )
+
+  let hours_since_last_query = case last_query_time.rows {
+    [last_query_time] -> {
+      timestamp.difference(
+        last_query_time.oldest_updated_at,
+        timestamp.system_time(),
+      )
+      |> duration.to_seconds()
+      |> float.round()
+      |> int.divide(60)
+      |> result.unwrap(0)
+      |> Some()
+    }
+    _ -> None
+  }
+
+  let hours_threshold = case live_games.count {
+    0 -> 168
+    _ -> 1
+  }
+
+  case hours_since_last_query {
+    None -> True
+    Some(hours_since_last_query) -> hours_since_last_query >= hours_threshold
+  }
+  |> Ok()
+}
+
+fn refresh_football_game_data(
+  database_connection_name: process.Name(pog.Message),
+) {
   let environment =
     "ENVIRONMENT"
     |> envoy.get()
@@ -155,6 +209,10 @@ pub fn get_schedule() {
 
   let request_result = case environment {
     "production" -> {
+      let date =
+        timestamp.system_time()
+        |> timestamp.to_calendar(calendar.local_offset())
+
       let year = { date.0 }.year |> int.to_string()
 
       use sports_data_io_api_key <- result.try(
@@ -180,7 +238,6 @@ pub fn get_schedule() {
       |> request.to()
       |> result.map_error(fn(_nil) { "failed to construct request record" })
   }
-
   use request <- result.try(request_result)
 
   use resp <- result.try(
@@ -207,6 +264,32 @@ pub fn get_schedule() {
 
   unsorted_external_games
   |> convert_to_internal_football_games()
-  |> sort_games()
+  |> upsert_games_to_database(database_connection_name)
   |> Ok()
+}
+
+/// Returns a list of FootballGame records, sorted 
+/// by game start time, games with missing start 
+/// times are returned at the end.
+pub fn get_schedule(database_connection_name: process.Name(pog.Message)) {
+  let refresh_result = case
+    is_football_game_data_stale(database_connection_name)
+  {
+    Ok(True) -> refresh_football_game_data(database_connection_name)
+    _ -> Ok(Nil)
+  }
+
+  case refresh_result {
+    Ok(_nil) -> Nil
+    Error(refresh_error) ->
+      logging.log(
+        logging.Critical,
+        "FAILED TO REFRESH DATABASE: " <> refresh_error,
+      )
+  }
+  use football_games <- result.try(fetch_football_games_from_database(
+    database_connection_name,
+  ))
+
+  Ok(football_games)
 }

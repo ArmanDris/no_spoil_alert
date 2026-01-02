@@ -9,6 +9,7 @@ import gleam/string
 import load_environment_variables
 import logging
 import mist.{type Connection, type ResponseData}
+import pog
 import table_page_html_generator.{generate_table_page}
 
 fn serve_site() {
@@ -22,6 +23,14 @@ fn serve_site() {
     "production" -> "0.0.0.0"
     _ -> "localhost"
   }
+
+  let db_pool_name = process.new_name("db_pool")
+  let assert Ok(database_url) = envoy.get("DATABASE_URL")
+  let assert Ok(pog_config) = pog.url_config(db_pool_name, database_url)
+  let assert Ok(_) =
+    pog_config
+    |> pog.pool_size(10)
+    |> pog.start
 
   let not_found =
     response.new(404)
@@ -37,7 +46,7 @@ fn serve_site() {
       case request.path_segments(req) {
         [] -> {
           let response_body =
-            get_schedule()
+            get_schedule(db_pool_name)
             |> generate_table_page()
             |> bytes_tree.from_string()
             |> mist.Bytes()
@@ -64,8 +73,10 @@ pub fn main() {
 
   case load_environment_variables.config() {
     Error(dot_env_error) -> {
-      echo dot_env_error
-      logging.log(logging.Critical, "Error loading environment variables")
+      logging.log(
+        logging.Critical,
+        "Error loading environment variables:" <> string.inspect(dot_env_error),
+      )
     }
     Ok(_) -> Nil
   }
