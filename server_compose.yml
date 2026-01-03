@@ -32,7 +32,7 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - /etc/no_spoil_alert/.env:/app/.env
+      - ./.env:/app/.env
     healthcheck:
       test: ["CMD-SHELL", "./healthcheck.sh"]
       interval: 3s
