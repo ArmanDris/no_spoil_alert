@@ -33,11 +33,11 @@ services:
       - "8000:8000"
     volumes:
       - /etc/no_spoil_alert/.env:/app/.env
-    healthcheck:
-      test: ["CMD-SHELL", "./healthcheck.sh"]
-      interval: 3s
-      timeout: 3s
-      retries: 20
+    # healthcheck:
+    #   test: ["CMD-SHELL", "./healthcheck.sh"]
+    #   interval: 3s
+    #   timeout: 3s
+    #   retries: 20
     depends_on:
       db:
         condition: service_healthy
