@@ -54,18 +54,18 @@ jobs:
         env:
           SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
           KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
-          SHORT_SHA: ${{ env.SHORT_SHA }}
+          IMAGE_DIGEST: ${{ steps.build-and-push.outputs.digest }}
         run: |
           mkdir -p ~/.ssh
           echo "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
-          echo "SHORT SHA: $SHORT_SHA"
+          echo "IMAGE DIGEST: $IMAGE_DIGEST"
 
           echo "$KNOWN_HOSTS" > ~/.ssh/known_hosts
           ssh -i ~/.ssh/deploy_key ubuntu@54.241.201.248 << 'EOF'
-          echo "Deploying no_spoil_alert with tag: sha-$SHORT_SHA"
+          echo "Deploying no_spoil_alert with tag: $IMAGE_DIGEST"
 
-          export NO_SPOIL_ALERT_TAG=sha-$SHORT_SHA
+          export NO_SPOIL_ALERT_TAG=$IMAGE_DIGEST
 
           cd ~/
 
@@ -75,7 +75,7 @@ jobs:
 
           docker system prune -f --volumes
 
-          echo "Deploy complete! Using image: sha-$SHORT_SHA"
+          echo "Deploy complete! Using image: $IMAGE_DIGEST"
           EOF
 
 
