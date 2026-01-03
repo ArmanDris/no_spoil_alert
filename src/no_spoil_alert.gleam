@@ -17,7 +17,7 @@ fn serve_site(db_pool_name: process.Name(pog.Message)) {
   let environment =
     "ENVIRONMENT"
     |> envoy.get()
-    |> result.unwrap("local")
+    |> result.unwrap("COULD NOT FIND ENVIRONMENT ENV VARIABLE")
     |> string.lowercase()
 
   let bind_interface = case environment {
@@ -79,8 +79,21 @@ pub fn main() {
     Ok(_) -> Nil
   }
 
+  let environment =
+    "ENVIRONMENT"
+    |> envoy.get()
+    |> result.unwrap("COULD NOT FIND ENVIRONMENT ENV VARIABLE")
+    |> string.lowercase()
+
+  let database_url =
+    case environment {
+      "production" -> "PRODUCTION_DATABASE_URL"
+      _ -> "LOCAL_DATABASE_URL"
+    }
+    |> envoy.get()
+    |> result.unwrap("COULD NOT FIND PRODUCTION DATABASE URL")
+
   let db_pool_name = process.new_name("db_pool")
-  let assert Ok(database_url) = envoy.get("DATABASE_URL")
   let assert Ok(pog_config) = pog.url_config(db_pool_name, database_url)
   let assert Ok(_) =
     pog_config
