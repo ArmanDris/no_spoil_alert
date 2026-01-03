@@ -28,7 +28,7 @@ services:
     restart: unless-stopped
 
   no_spoil_alert:
-    image: ghcr.io/armandris/no_spoil_alert:${NO_SPOIL_ALERT_TAG:-latest}
+    image: ghcr.io/armandris/no_spoil_alert@${NO_SPOIL_ALERT_DIGEST}
     ports:
       - "8000:8000"
     volumes:

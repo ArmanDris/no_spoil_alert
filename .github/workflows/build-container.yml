@@ -62,6 +62,15 @@ jobs:
           echo "IMAGE DIGEST: $IMAGE_DIGEST"
 
           echo "$KNOWN_HOSTS" > ~/.ssh/known_hosts
-          ssh -i ~/.ssh/deploy_key ubuntu@54.241.201.248 "IMAGE_DIGEST='$IMAGE_DIGEST' bash -s" << 'EOF'
-          echo "implement me!"
+          ssh -i ~/.ssh/deploy_key ubuntu@54.241.201.248 "NO_SPOIL_ALERT_DIGEST='$IMAGE_DIGEST' bash -s" << 'EOF'
+
+          echo "Deploying ghcr.io/armandris/no_spoil_alert@$NO_SPOIL_ALERT_DIGEST"
+
+          docker compose -f ~/server_compose.yml pull no_spoil_alert
+
+          docker compose -f ~/server_compose.yml up -d --no-deps --force-recreate --wait no_spoil_alert
+
+          docker image prune -f
+
+          echo "Deployment complete!"
           EOF
