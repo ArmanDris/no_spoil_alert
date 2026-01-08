@@ -173,7 +173,9 @@ pub fn upsert_games_to_database(
   })
 }
 
-fn database_game_to_internal_game(database_games: List(sql.GetFootballGamesRow)) {
+fn database_game_to_internal_game(
+  database_games: List(sql.GetThisWeeksFootballGamesRow),
+) {
   list.map(database_games, fn(database_game) {
     FootballGame(
       game_id: database_game.game_id,
@@ -191,15 +193,15 @@ fn database_game_to_internal_game(database_games: List(sql.GetFootballGamesRow))
   })
 }
 
-pub fn fetch_football_games_from_database(
+pub fn fetch_this_weeks_football_games_from_database(
   database_connection_name: process.Name(pog.Message),
 ) {
   let database_connection = pog.named_connection(database_connection_name)
 
   use games_query_result <- result.try(
-    sql.get_football_games(database_connection)
+    sql.get_this_weeks_football_games(database_connection)
     |> result.map_error(fn(query_error) {
-      "Error while trying to fetch games from database "
+      "Error while trying to fetch games from database"
       <> string.inspect(query_error)
     }),
   )

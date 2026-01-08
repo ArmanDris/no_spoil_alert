@@ -88,9 +88,65 @@ pub fn get_last_update_timestamp(
     decode.success(GetLastUpdateTimestampRow(oldest_updated_at:))
   }
 
-  "SELECT MIN(updated_at) AS oldest_updated_at
+  "SELECT MAX(updated_at) AS oldest_updated_at
 FROM public.football_games;
 
+"
+  |> pog.query
+  |> pog.returning(decoder)
+  |> pog.execute(db)
+}
+
+/// A row you get from running the `get_this_weeks_football_games` query
+/// defined in `./src/sql/get_this_weeks_football_games.sql`.
+///
+/// > 🐿️ This type definition was generated automatically using v4.6.0 of the
+/// > [squirrel package](https://github.com/giacomocavalieri/squirrel).
+///
+pub type GetThisWeeksFootballGamesRow {
+  GetThisWeeksFootballGamesRow(
+    game_id: Int,
+    home_team: String,
+    away_team: String,
+    start_time: Timestamp,
+    game_status: Option(String),
+    quarter_status: Option(String),
+    updated_at: Timestamp,
+  )
+}
+
+/// Runs the `get_this_weeks_football_games` query
+/// defined in `./src/sql/get_this_weeks_football_games.sql`.
+///
+/// > 🐿️ This function was generated automatically using v4.6.0 of
+/// > the [squirrel package](https://github.com/giacomocavalieri/squirrel).
+///
+pub fn get_this_weeks_football_games(
+  db: pog.Connection,
+) -> Result(pog.Returned(GetThisWeeksFootballGamesRow), pog.QueryError) {
+  let decoder = {
+    use game_id <- decode.field(0, decode.int)
+    use home_team <- decode.field(1, decode.string)
+    use away_team <- decode.field(2, decode.string)
+    use start_time <- decode.field(3, pog.timestamp_decoder())
+    use game_status <- decode.field(4, decode.optional(decode.string))
+    use quarter_status <- decode.field(5, decode.optional(decode.string))
+    use updated_at <- decode.field(6, pog.timestamp_decoder())
+    decode.success(GetThisWeeksFootballGamesRow(
+      game_id:,
+      home_team:,
+      away_team:,
+      start_time:,
+      game_status:,
+      quarter_status:,
+      updated_at:,
+    ))
+  }
+
+  "SELECT *
+FROM public.football_games
+WHERE start_time >= date_trunc('week', now() AT TIME ZONE 'UTC')
+ORDER BY start_time DESC;
 "
   |> pog.query
   |> pog.returning(decoder)

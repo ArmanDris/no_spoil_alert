@@ -1,7 +1,7 @@
 import envoy
 import football_game.{
   type QuarterStatus, type Status, FootballGame,
-  fetch_football_games_from_database, upsert_games_to_database,
+  fetch_this_weeks_football_games_from_database, upsert_games_to_database,
 }
 import gleam/dynamic/decode
 import gleam/erlang/process
@@ -234,7 +234,10 @@ fn refresh_football_game_data(
       |> request.to()
       |> result.map_error(fn(_nil) { "Failed to construct request record" })
       |> result.map(fn(request) {
-        request.set_path(request, "/v3/nfl/scores/json/SchedulesBasic/" <> year)
+        request.set_path(
+          request,
+          "/v3/nfl/scores/json/SchedulesBasic/" <> year <> "POST",
+        )
       })
       |> result.map(fn(request) {
         request.set_query(request, [#("key", sports_data_io_api_key)])
@@ -295,9 +298,6 @@ pub fn get_schedule(database_connection_name: process.Name(pog.Message)) {
         "FAILED TO REFRESH DATABASE: " <> refresh_error,
       )
   }
-  use football_games <- result.try(fetch_football_games_from_database(
-    database_connection_name,
-  ))
 
-  Ok(football_games)
+  fetch_this_weeks_football_games_from_database(database_connection_name)
 }
