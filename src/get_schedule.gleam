@@ -14,7 +14,6 @@ import gleam/list
 import gleam/option.{type Option, None, Some}
 import gleam/result
 import gleam/string
-import gleam/time/calendar
 import gleam/time/duration
 import gleam/time/timestamp
 import logging
@@ -216,12 +215,6 @@ fn refresh_football_game_data(
 
   let request_result = case environment {
     "production" -> {
-      let date =
-        timestamp.system_time()
-        |> timestamp.to_calendar(calendar.local_offset())
-
-      let year = { date.0 }.year |> int.to_string()
-
       use sports_data_io_api_key <- result.try(
         "SPORTS_DATA_IO_API_KEY"
         |> envoy.get()
@@ -234,10 +227,7 @@ fn refresh_football_game_data(
       |> request.to()
       |> result.map_error(fn(_nil) { "Failed to construct request record" })
       |> result.map(fn(request) {
-        request.set_path(
-          request,
-          "/v3/nfl/scores/json/SchedulesBasic/" <> year <> "POST",
-        )
+        request.set_path(request, "/v3/nfl/scores/json/SchedulesBasic/2025POST")
       })
       |> result.map(fn(request) {
         request.set_query(request, [#("key", sports_data_io_api_key)])
