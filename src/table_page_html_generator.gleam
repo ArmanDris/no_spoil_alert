@@ -7,6 +7,7 @@ import gleam/list
 import gleam/option.{None, Some}
 import gleam/string
 import gleam/time/calendar
+import gleam/time/duration
 import gleam/time/timestamp
 
 fn month_to_string(month) {
@@ -49,13 +50,13 @@ fn generate_rows_html(rows: List(FootballGame)) {
     let parsed_time =
       fn() {
         let #(date, time) =
-          timestamp.to_calendar(row.date_time, calendar.utc_offset)
+          timestamp.to_calendar(row.date_time, duration.hours(-8))
         month_to_string(date.month)
         <> " "
         <> int.to_string(date.day)
         <> ", "
         <> format_time(time)
-        <> " UTC"
+        <> " PST"
       }()
 
     let parsed_status = case row.status {
