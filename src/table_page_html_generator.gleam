@@ -1,6 +1,4 @@
-import football_game.{
-  type FootballGame, quarter_status_to_string, status_to_string,
-}
+import football_game.{type FootballGame, status_to_string}
 import gleam/int
 import gleam/io
 import gleam/list
@@ -64,19 +62,11 @@ fn generate_rows_html(rows: List(FootballGame)) {
       None -> "No Data"
     }
 
-    let parsed_quarter_status = case row.quarter_status {
-      Some(quarter_status) -> quarter_status_to_string(quarter_status)
-      None -> "No Data"
-    }
-
     "<tr>
-      <td>" <> int.to_string(row.game_id) <> "</td>
-      <td>" <> row.home_team <> "</td>
-      <td>" <> row.away_team <> "</td>
+      <td> <img src='/images/" <> row.home_team <> ".png'>" <> row.home_team <> "</td>
+      <td> <img src='/images/" <> row.home_team <> ".png'>" <> row.away_team <> "</td>
       <td>" <> parsed_time <> "</td>
-      <td>" <> parsed_status <> "
-      <td>" <> parsed_quarter_status <> "</td>
-      <td>" <> timestamp.to_rfc3339(row.updated_at, calendar.utc_offset) <> "</td>
+      <td>" <> parsed_status <> "</td>
     </tr>"
   })
   |> string.concat()
@@ -90,26 +80,33 @@ pub fn generate_table_page(rows: Result(List(FootballGame), String)) {
     }
     Ok(rows) -> " <table>
       <tr>
-        <th>Game ID</th>
         <th>Home Team</th>
         <th>Away Team</th>
-        <th>Start Time</th>
+        <th>Kickoff</th>
         <th>Game Status</th>
-        <th>Quarter Status</th>
-        <th>Updated At</th>
       </tr>
       " <> generate_rows_html(rows)
   }
 
-  "<html lang='en'
+  "<html lang='en'>
     <head>
       <title>nfl schedule</title>
     </head>
     <body>
-    " <> page_body <> "
+      <div>
+        " <> page_body <> "
+      </div>
     </body>
   </html>
   <style>
+    body {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+    }
+    table {
+      width: 800px;
+    }
     table, th, td {
       border: 1px solid black;
     }
