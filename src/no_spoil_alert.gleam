@@ -45,10 +45,9 @@ fn serve_site(db_pool_name: process.Name(pog.Message)) {
           |> response.prepend_header("Content-Type", "text/html")
           |> response.set_body(response_body)
         }
-        ["images", image_name] -> {
+        ["assets", image_name] -> {
           case get_image_bytes(image_name) {
-            Error(file_error) -> {
-              echo file_error
+            Error(_file_error) -> {
               response.new(404)
               |> response.prepend_header("Content-Type", "text/html")
               |> response.set_body(

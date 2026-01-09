@@ -20,6 +20,7 @@ RUN \
   && adduser --system webapp -g webapp
 USER webapp
 COPY --from=build /app/build/erlang-shipment /app
+COPY ./assets/ ./app/assets/
 WORKDIR /app
 ENTRYPOINT ["/app/entrypoint.sh"]
 CMD ["run"]

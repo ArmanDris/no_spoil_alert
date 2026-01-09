@@ -63,8 +63,8 @@ fn generate_rows_html(rows: List(FootballGame)) {
     }
 
     "<tr>
-      <td> <div class='cell-div'> <img src='/images/" <> row.home_team <> ".png'>" <> row.home_team <> "</div> </td>
-      <td> <div class='cell-div'> <img src='/images/" <> row.away_team <> ".png'>" <> row.away_team <> "</div> </td>
+      <td> <div class='cell-div'> <img src='/assets/" <> row.home_team <> ".png'>" <> row.home_team <> "</div> </td>
+      <td> <div class='cell-div'> <img src='/assets/" <> row.away_team <> ".png'>" <> row.away_team <> "</div> </td>
       <td>" <> parsed_time <> "</td>
       <td>" <> parsed_status <> "</td>
     </tr>"
