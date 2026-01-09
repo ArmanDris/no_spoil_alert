@@ -1,4 +1,5 @@
 import envoy
+import get_image_bytes.{get_image_bytes}
 import get_schedule.{get_schedule}
 import gleam/bytes_tree
 import gleam/erlang/process
@@ -43,6 +44,29 @@ fn serve_site(db_pool_name: process.Name(pog.Message)) {
           response.new(200)
           |> response.prepend_header("Content-Type", "text/html")
           |> response.set_body(response_body)
+        }
+        ["images", image_name] -> {
+          case get_image_bytes(image_name) {
+            Error(file_error) -> {
+              echo file_error
+              response.new(404)
+              |> response.prepend_header("Content-Type", "text/html")
+              |> response.set_body(
+                "Not Found"
+                |> bytes_tree.from_string()
+                |> mist.Bytes(),
+              )
+            }
+            Ok(image_bytes) -> {
+              response.new(200)
+              |> response.prepend_header("Content-Type", "image/png")
+              |> response.set_body(
+                image_bytes
+                |> bytes_tree.from_bit_array()
+                |> mist.Bytes(),
+              )
+            }
+          }
         }
         _ -> {
           let response_body =

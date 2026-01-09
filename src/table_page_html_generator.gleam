@@ -63,8 +63,8 @@ fn generate_rows_html(rows: List(FootballGame)) {
     }
 
     "<tr>
-      <td> <img src='/images/" <> row.home_team <> ".png'>" <> row.home_team <> "</td>
-      <td> <img src='/images/" <> row.home_team <> ".png'>" <> row.away_team <> "</td>
+      <td> <div class='cell-div'> <img src='/images/" <> row.home_team <> ".png'>" <> row.home_team <> "</div> </td>
+      <td> <div class='cell-div'> <img src='/images/" <> row.away_team <> ".png'>" <> row.away_team <> "</div> </td>
       <td>" <> parsed_time <> "</td>
       <td>" <> parsed_status <> "</td>
     </tr>"
@@ -80,10 +80,10 @@ pub fn generate_table_page(rows: Result(List(FootballGame), String)) {
     }
     Ok(rows) -> " <table>
       <tr>
-        <th>Home Team</th>
-        <th>Away Team</th>
+        <th>Home</th>
+        <th>Away</th>
         <th>Kickoff</th>
-        <th>Game Status</th>
+        <th>Status</th>
       </tr>
       " <> generate_rows_html(rows)
   }
@@ -109,6 +109,20 @@ pub fn generate_table_page(rows: Result(List(FootballGame), String)) {
     }
     table, th, td {
       border: 1px solid black;
+      font-size: 24px;
+    }
+    td {
+      padding: 8px;
+    }
+    td img {
+      max-height: 60px;
+      max-width: 60px;
+      margin-right: 8px;
+    }
+    .cell-div {
+      display: flex;
+      align-items: center;
+      height: 60px;
     }
   </style>"
 }
