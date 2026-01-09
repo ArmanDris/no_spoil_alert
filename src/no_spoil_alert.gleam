@@ -67,6 +67,28 @@ fn serve_site(db_pool_name: process.Name(pog.Message)) {
             }
           }
         }
+        ["favicon.ico"] -> {
+          case get_image_bytes("nfl_logo.png") {
+            Error(_file_error) -> {
+              response.new(404)
+              |> response.prepend_header("Content-Type", "text/html")
+              |> response.set_body(
+                "Not Found"
+                |> bytes_tree.from_string()
+                |> mist.Bytes(),
+              )
+            }
+            Ok(image_bytes) -> {
+              response.new(200)
+              |> response.prepend_header("Content-Type", "image/png")
+              |> response.set_body(
+                image_bytes
+                |> bytes_tree.from_bit_array()
+                |> mist.Bytes(),
+              )
+            }
+          }
+        }
         _ -> {
           let response_body =
             not_found_page_html_generator()
