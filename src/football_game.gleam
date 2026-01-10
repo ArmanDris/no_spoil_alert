@@ -210,3 +210,24 @@ pub fn fetch_this_weeks_football_games_from_database(
   |> database_game_to_internal_game()
   |> Ok()
 }
+
+pub type FetchLastUpdatedResult {
+  QueryError(pog.QueryError)
+  EmptyReturn
+}
+
+pub fn fetch_last_updated(database_connection_name: process.Name(pog.Message)) {
+  let database_connection = pog.named_connection(database_connection_name)
+
+  use games_query_result <- result.try(
+    sql.get_last_update_timestamp(database_connection)
+    |> result.map_error(fn(error) { QueryError(error) }),
+  )
+
+  use st <- result.try(
+    list.first(games_query_result.rows)
+    |> result.map_error(fn(_nil) { EmptyReturn }),
+  )
+
+  Ok(st.newest_updated_at)
+}

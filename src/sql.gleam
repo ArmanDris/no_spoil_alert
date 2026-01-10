@@ -71,7 +71,7 @@ ORDER BY start_time ASC;
 /// > [squirrel package](https://github.com/giacomocavalieri/squirrel).
 ///
 pub type GetLastUpdateTimestampRow {
-  GetLastUpdateTimestampRow(oldest_updated_at: Timestamp)
+  GetLastUpdateTimestampRow(newest_updated_at: Timestamp)
 }
 
 /// Runs the `get_last_update_timestamp` query
@@ -84,11 +84,11 @@ pub fn get_last_update_timestamp(
   db: pog.Connection,
 ) -> Result(pog.Returned(GetLastUpdateTimestampRow), pog.QueryError) {
   let decoder = {
-    use oldest_updated_at <- decode.field(0, pog.timestamp_decoder())
-    decode.success(GetLastUpdateTimestampRow(oldest_updated_at:))
+    use newest_updated_at <- decode.field(0, pog.timestamp_decoder())
+    decode.success(GetLastUpdateTimestampRow(newest_updated_at:))
   }
 
-  "SELECT MAX(updated_at) AS oldest_updated_at
+  "SELECT MAX(updated_at) AS newest_updated_at
 FROM public.football_games;
 
 "

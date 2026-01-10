@@ -1,4 +1,5 @@
 import envoy
+import football_game.{fetch_last_updated}
 import get_image_bytes.{get_image_bytes}
 import get_schedule.{get_schedule}
 import gleam/bytes_tree
@@ -37,7 +38,7 @@ fn serve_site(db_pool_name: process.Name(pog.Message)) {
         [] -> {
           let response_body =
             get_schedule(db_pool_name)
-            |> generate_table_page()
+            |> generate_table_page(fetch_last_updated(db_pool_name))
             |> bytes_tree.from_string()
             |> mist.Bytes()
 

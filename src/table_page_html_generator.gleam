@@ -1,12 +1,15 @@
 import football_game.{type FootballGame, status_to_string}
+import gleam/float
 import gleam/int
 import gleam/io
 import gleam/list
 import gleam/option.{None, Some}
+import gleam/result
 import gleam/string
 import gleam/time/calendar
 import gleam/time/duration
 import gleam/time/timestamp
+import logging
 
 fn month_to_string(month) {
   case month {
@@ -72,7 +75,57 @@ fn generate_rows_html(rows: List(FootballGame)) {
   |> string.concat()
 }
 
-pub fn generate_table_page(rows: Result(List(FootballGame), String)) {
+pub fn generate_header_html(last_updated) {
+  let last_updated = case last_updated {
+    Ok(time) -> {
+      let minutes_since_last_update =
+        time
+        |> timestamp.difference(timestamp.system_time())
+        |> duration.to_seconds()
+        |> float.divide(60.0)
+        |> result.unwrap(0.0)
+        |> float.truncate()
+
+      let minutes = case minutes_since_last_update {
+        1 -> "minute"
+        _ -> "minutes"
+      }
+
+      "<p>Updated "
+      <> int.to_string(minutes_since_last_update)
+      <> " "
+      <> minutes
+      <> " ago</p>"
+    }
+    Error(error) -> {
+      logging.log(
+        logging.Critical,
+        "Error fetching last updated timestamp: " <> string.inspect(error),
+      )
+
+      ""
+    }
+  }
+  "
+  <header>
+    <img src='assets/nfl_logo.png' />
+    <div>
+      <h1>No Spoil Alert</h1>
+      " <> last_updated <> "
+    </div>
+  </header>
+  "
+}
+
+pub fn generate_table_page(
+  rows: Result(List(FootballGame), String),
+  last_updated: Result(
+    timestamp.Timestamp,
+    football_game.FetchLastUpdatedResult,
+  ),
+) {
+  let page_header = generate_header_html(last_updated)
+
   let page_body = case rows {
     Error(error_message) -> {
       io.println_error(error_message)
@@ -93,13 +146,39 @@ pub fn generate_table_page(rows: Result(List(FootballGame), String)) {
       <title>nfl schedule</title>
     </head>
     <body>
+      " <> page_header <> "
+      <main>
       <div>
         " <> page_body <> "
       </div>
-    </body>
+      </main>
+    </main>
   </html>
   <style>
-    body {
+    * {
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      border-bottom: 1px solid black;
+      width: 100%;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 64px;
+    }
+    header img {
+      justify-self: start;
+      max-height: 60px;
+      max-width: 60px;
+      margin: 16px;
+    }
+    header div {
+      justify-self: center;
+      text-align: center;
+    }
+    main {
       width: 100%;
       display: flex;
       justify-content: center;

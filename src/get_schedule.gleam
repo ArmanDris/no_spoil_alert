@@ -165,7 +165,7 @@ fn is_football_game_data_stale(
   let seconds_since_last_query = case last_query_time.rows {
     [last_query_time] -> {
       timestamp.difference(
-        last_query_time.oldest_updated_at,
+        last_query_time.newest_updated_at,
         timestamp.system_time(),
       )
       |> duration.to_seconds()
