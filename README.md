@@ -6,5 +6,5 @@ NFL Schedule without the spoilers
 
 ```sh
 gleam run   # Run the project
-gleam test  # Run the tests (this would work if there were tests lololol)
+gleam test  # Run the tests
 ```
