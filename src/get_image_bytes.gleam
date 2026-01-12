@@ -34,6 +34,7 @@ fn is_image_name_allowed(image_name: String) {
     "LAR.png" -> True
     "NO.png" -> True
     "TB.png" -> True
+    "SEA.png" -> True
     _ -> False
   }
 }
