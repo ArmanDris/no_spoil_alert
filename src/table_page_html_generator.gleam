@@ -1,4 +1,5 @@
 import football_game.{type FootballGame, status_to_string}
+import footer_html_generator.{footer_html_generator}
 import gleam/float
 import gleam/int
 import gleam/io
@@ -138,7 +139,7 @@ pub fn generate_table_page(
         <th>Kickoff</th>
         <th>Status</th>
       </tr>
-      " <> generate_rows_html(rows)
+      " <> generate_rows_html(rows) <> "</table>"
   }
 
   "<html lang='en'>
@@ -148,11 +149,12 @@ pub fn generate_table_page(
     <body>
       " <> page_header <> "
       <main>
-      <div>
-        " <> page_body <> "
-      </div>
+        <div>
+          " <> page_body <> "
+        </div>
       </main>
-    </main>
+      " <> footer_html_generator() <> "
+    </body>
   </html>
   <style>
     * {
@@ -160,7 +162,7 @@ pub fn generate_table_page(
       padding: 0;
     }
     header {
-      border-bottom: 1px solid black;
+      border-bottom: 1px solid DimGrey;
       width: 100%;
       display: grid;
       grid-template-columns: 1fr 1fr 1fr;
@@ -202,6 +204,23 @@ pub fn generate_table_page(
       display: flex;
       align-items: center;
       height: 60px;
+    }
+    footer {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      margin-top: 64px;
+    }
+    #footer-content h3 {
+      line-height: 1.5;
+    }
+    #footer-content {
+      color: DimGrey;
+      width: 800px;
+      line-height: 1.2;
+    }
+    #footer-content a {
+      color: DimGrey;
     }
   </style>"
 }
