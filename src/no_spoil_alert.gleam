@@ -4,6 +4,7 @@ import get_image_bytes.{get_image_bytes}
 import get_schedule.{get_schedule}
 import gleam/bytes_tree
 import gleam/erlang/process
+import gleam/http
 import gleam/http/request.{type Request}
 import gleam/http/response.{type Response}
 import gleam/result
@@ -33,6 +34,19 @@ fn serve_site(db_pool_name: process.Name(pog.Message)) {
         logging.Info,
         "Got a request from " <> string.inspect(mist.get_client_info(req.body)),
       )
+
+      // Return 405 if method is not GET
+      use _method <- fn(
+        req: Request(Connection),
+        rest_of_code: fn(Request(Connection)) -> Response(ResponseData),
+      ) {
+        case req.method {
+          http.Get -> rest_of_code(req)
+          _ ->
+            response.new(405)
+            |> response.set_body(mist.Bytes(bytes_tree.new()))
+        }
+      }(req)
 
       case request.path_segments(req) {
         [] -> {
