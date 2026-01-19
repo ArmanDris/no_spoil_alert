@@ -210,6 +210,7 @@ pub fn generate_table_page(
       display: flex;
       justify-content: center;
       margin-top: 64px;
+      margin-bottom: 64px;
     }
     #footer-content h3 {
       line-height: 1.5;
