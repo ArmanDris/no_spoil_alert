@@ -9,6 +9,7 @@ import gleam/http/request.{type Request}
 import gleam/http/response.{type Response}
 import gleam/result
 import gleam/string
+import insert_request
 import load_environment_variables
 import logging
 import mist.{type Connection, type ResponseData}
@@ -34,6 +35,8 @@ fn serve_site(db_pool_name: process.Name(pog.Message)) {
         logging.Info,
         "Got a request from " <> string.inspect(mist.get_client_info(req.body)),
       )
+
+      let _insert_result = insert_request.insert_request(req, db_pool_name)
 
       // Return 405 if method is not GET
       use _method <- fn(

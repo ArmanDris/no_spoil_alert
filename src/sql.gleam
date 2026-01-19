@@ -8,6 +8,7 @@ import gleam/dynamic/decode
 import gleam/option.{type Option}
 import gleam/time/timestamp.{type Timestamp}
 import pog
+import youid/uuid.{type Uuid}
 
 /// A row you get from running the `get_football_games` query
 /// defined in `./src/sql/get_football_games.sql`.
@@ -152,6 +153,59 @@ WHERE start_time >= (
 ORDER BY start_time ASC;
 "
   |> pog.query
+  |> pog.returning(decoder)
+  |> pog.execute(db)
+}
+
+/// Runs the `insert_request` query
+/// defined in `./src/sql/insert_request.sql`.
+///
+/// > 🐿️ This function was generated automatically using v4.6.0 of
+/// > the [squirrel package](https://github.com/giacomocavalieri/squirrel).
+///
+pub fn insert_request(
+  db: pog.Connection,
+  arg_1: Uuid,
+  arg_2: Timestamp,
+  arg_3: String,
+  arg_4: String,
+  arg_5: String,
+  arg_6: String,
+  arg_7: String,
+  arg_8: String,
+) -> Result(pog.Returned(Nil), pog.QueryError) {
+  let decoder = decode.map(decode.dynamic, fn(_) { Nil })
+
+  "INSERT INTO requests (
+  id,
+  received_at,
+  method,
+  host,
+  path,
+  query,
+  remote_ip,
+  request_body
+)
+VALUES (
+  $1, -- uuid
+  $2, -- timestamp
+  $3, -- method
+  $4, -- host
+  $5, -- path
+  $6, -- query
+  $7, -- remote_ip
+  $8  -- request_body
+);
+"
+  |> pog.query
+  |> pog.parameter(pog.text(uuid.to_string(arg_1)))
+  |> pog.parameter(pog.timestamp(arg_2))
+  |> pog.parameter(pog.text(arg_3))
+  |> pog.parameter(pog.text(arg_4))
+  |> pog.parameter(pog.text(arg_5))
+  |> pog.parameter(pog.text(arg_6))
+  |> pog.parameter(pog.text(arg_7))
+  |> pog.parameter(pog.text(arg_8))
   |> pog.returning(decoder)
   |> pog.execute(db)
 }
