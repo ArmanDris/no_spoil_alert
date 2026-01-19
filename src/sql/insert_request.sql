@@ -1,4 +1,4 @@
-INSERT INTO requests (
+INSERT INTO requests(
   id,
   received_at,
   method,
@@ -6,7 +6,8 @@ INSERT INTO requests (
   path,
   query,
   remote_ip,
-  request_body
+  request_body,
+  headers
 )
 VALUES (
   $1, -- uuid
@@ -16,5 +17,6 @@ VALUES (
   $5, -- path
   $6, -- query
   $7, -- remote_ip
-  $8  -- request_body
+  $8, -- request_body
+  $9  -- headers (jsonb)
 );

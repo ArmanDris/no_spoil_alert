@@ -5,6 +5,7 @@
 ////
 
 import gleam/dynamic/decode
+import gleam/json.{type Json}
 import gleam/option.{type Option}
 import gleam/time/timestamp.{type Timestamp}
 import pog
@@ -173,10 +174,11 @@ pub fn insert_request(
   arg_6: String,
   arg_7: String,
   arg_8: String,
+  arg_9: Json,
 ) -> Result(pog.Returned(Nil), pog.QueryError) {
   let decoder = decode.map(decode.dynamic, fn(_) { Nil })
 
-  "INSERT INTO requests (
+  "INSERT INTO requests(
   id,
   received_at,
   method,
@@ -184,7 +186,8 @@ pub fn insert_request(
   path,
   query,
   remote_ip,
-  request_body
+  request_body,
+  headers
 )
 VALUES (
   $1, -- uuid
@@ -194,7 +197,8 @@ VALUES (
   $5, -- path
   $6, -- query
   $7, -- remote_ip
-  $8  -- request_body
+  $8, -- request_body
+  $9  -- headers (jsonb)
 );
 "
   |> pog.query
@@ -206,6 +210,7 @@ VALUES (
   |> pog.parameter(pog.text(arg_6))
   |> pog.parameter(pog.text(arg_7))
   |> pog.parameter(pog.text(arg_8))
+  |> pog.parameter(pog.text(json.to_string(arg_9)))
   |> pog.returning(decoder)
   |> pog.execute(db)
 }

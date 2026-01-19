@@ -2,6 +2,8 @@ import gleam/bit_array
 import gleam/erlang/process
 import gleam/http
 import gleam/http/request.{type Request}
+import gleam/json
+import gleam/list
 import gleam/option
 import gleam/result
 import gleam/string
@@ -29,6 +31,11 @@ pub fn insert_request(
     Ok(bit_array_request) -> bit_array_request.body |> bit_array.inspect()
   }
 
+  let request_headers =
+    req.headers
+    |> list.map(fn(tuple) { #(tuple.0, json.string(tuple.1)) })
+    |> json.object()
+
   sql.insert_request(
     database_connection,
     uuid.v4(),
@@ -39,6 +46,7 @@ pub fn insert_request(
     option.unwrap(req.query, ""),
     string.inspect(mist.get_client_info(req.body)),
     request_body,
+    request_headers,
   )
   |> result.map_error(fn(error) {
     logging.log(
