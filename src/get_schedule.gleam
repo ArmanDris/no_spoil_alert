@@ -227,7 +227,7 @@ fn refresh_football_game_data(
       |> request.to()
       |> result.map_error(fn(_nil) { "Failed to construct request record" })
       |> result.map(fn(request) {
-        request.set_path(request, "/v3/nfl/scores/json/SchedulesBasic/2025POST")
+        request.set_path(request, "/v3/nfl/scores/json/SchedulesBasic/2026PRE")
       })
       |> result.map(fn(request) {
         request.set_query(request, [#("key", sports_data_io_api_key)])
