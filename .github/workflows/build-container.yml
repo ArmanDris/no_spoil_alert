@@ -62,7 +62,7 @@ jobs:
           echo "IMAGE DIGEST: $IMAGE_DIGEST"
 
           echo "$KNOWN_HOSTS" > ~/.ssh/known_hosts
-          ssh -i ~/.ssh/deploy_key ubuntu@52.9.243.29 "NO_SPOIL_ALERT_DIGEST=$IMAGE_DIGEST bash -s" << 'EOF'
+          ssh -i ~/.ssh/deploy_key ec2-user@52.9.243.29 "NO_SPOIL_ALERT_DIGEST=$IMAGE_DIGEST bash -s" << 'EOF'
           set -euo pipefail
           env | grep NO_SPOIL_ALERT_DIGEST
 
