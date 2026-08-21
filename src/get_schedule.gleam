@@ -61,7 +61,7 @@ fn decode_schedule_response(response_body) {
       "Suspended" -> decode.success(football_game.Suspended)
       "Postponed" -> decode.success(football_game.Postponed)
       "Delayed" -> decode.success(football_game.Delayed)
-      "Cancelled" -> decode.success(football_game.Cancelled)
+      "Canceled" -> decode.success(football_game.Cancelled)
       "Forfeit" -> decode.success(football_game.Forfeit)
       _ -> decode.failure(football_game.Cancelled, "StatusEnum")
     }
