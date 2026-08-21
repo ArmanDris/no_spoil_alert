@@ -1,4 +1,4 @@
-DROP TABLE football_games;
+DROP TABLE IF EXISTS football_games;
 
 CREATE TABLE public.football_games (
   game_id        BIGINT PRIMARY KEY,
@@ -10,7 +10,7 @@ CREATE TABLE public.football_games (
   updated_at     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-DROP TABLE requests;
+DROP TABLE IF EXISTS requests;
 
 CREATE TABLE public.requests (
   id           UUID PRIMARY KEY,
