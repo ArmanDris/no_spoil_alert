@@ -52,7 +52,7 @@ fn generate_rows_html(rows: List(FootballGame)) {
     let parsed_time =
       fn() {
         let #(date, time) =
-          timestamp.to_calendar(row.date_time, duration.hours(-8))
+          timestamp.to_calendar(row.date_time, duration.hours(-7))
         month_to_string(date.month)
         <> " "
         <> int.to_string(date.day)
